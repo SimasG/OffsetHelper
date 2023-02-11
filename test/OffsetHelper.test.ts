@@ -42,6 +42,7 @@ describe("OffsetHelper", function () {
 
     const offsetHelperFactory = (await ethers.getContractFactory(
       "OffsetHelper",
+      // ** Why are we selecting `addr2` as the signer instead of `addr1` here?
       addr2
     )) as OffsetHelper__factory;
     const offsetHelper = await offsetHelperFactory.deploy(
@@ -49,6 +50,7 @@ describe("OffsetHelper", function () {
       Object.values(addresses)
     );
 
+    // Deploying new (standalone, not proxy it seems?) contract instances
     const bct = IToucanPoolToken__factory.connect(addresses.BCT, addr2);
     const nct = IToucanPoolToken__factory.connect(addresses.NCT, addr2);
     const usdc = IERC20__factory.connect(addresses.USDC, addr2);
@@ -82,6 +84,8 @@ describe("OffsetHelper", function () {
     );
 
     await Promise.all(
+      // Sending all but one MATIC to addr2
+      // (the signer of OffsetHelper) from each generated signer
       addrs.map(async (addr) => {
         await addr.sendTransaction({
           to: addr2.address,
@@ -90,10 +94,12 @@ describe("OffsetHelper", function () {
       })
     );
 
+    // ** Depositing 1000 MATIC to addr2?
     await IWETH__factory.connect(addresses.WMATIC, addr2).deposit({
       value: parseEther("1000"),
     });
 
+    // ** Swapping x MATIC to 20 WETH (from where to where?)
     await swapper.swap(addresses.WETH, parseEther("20.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.WETH,
@@ -101,6 +107,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
+    // ** Swapping x MATIC to 1000 USDC (from where to where?)
     await swapper.swap(addresses.USDC, parseUSDC("1000"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.USDC,
@@ -108,6 +115,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
+    // ** Swapping x MATIC to 50 BCT (from where to where?)
     await swapper.swap(addresses.BCT, parseEther("50.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.BCT,
@@ -115,6 +123,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
+    // ** Swapping x MATIC to 50 NCT (from where to where?)
     await swapper.swap(addresses.NCT, parseEther("50.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.NCT,
