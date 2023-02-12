@@ -40,23 +40,27 @@ describe("OffsetHelper", function () {
   async function deployOffsetHelperFixture() {
     const [addr1, addr2, ...addrs] = await ethers.getSigners();
 
+    // deploying offsetHelper Factory contract
     const offsetHelperFactory = (await ethers.getContractFactory(
       "OffsetHelper",
       // ** Why are we selecting `addr2` as the signer instead of `addr1` here?
       addr2
     )) as OffsetHelper__factory;
+
+    // deploying offsetHelper contract
     const offsetHelper = await offsetHelperFactory.deploy(
       Object.keys(addresses),
       Object.values(addresses)
     );
 
-    // Deploying new (standalone, not proxy it seems?) contract instances
+    // creating contract instances & connecting them with a signer (`addr2`)
     const bct = IToucanPoolToken__factory.connect(addresses.BCT, addr2);
     const nct = IToucanPoolToken__factory.connect(addresses.NCT, addr2);
     const usdc = IERC20__factory.connect(addresses.USDC, addr2);
     const weth = IERC20__factory.connect(addresses.WETH, addr2);
     const wmatic = IWETH__factory.connect(addresses.WMATIC, addr2);
 
+    // declaring tokens and their 1. name & 2. interface
     const tokens: Record<string, token> = {
       nct: {
         name: "NCT",
@@ -68,10 +72,14 @@ describe("OffsetHelper", function () {
       },
     };
 
+    // deploying swapper Factory contract
     const swapperFactory = (await ethers.getContractFactory(
       "Swapper",
       addr2
     )) as Swapper__factory;
+
+    // deploying swapper contract
+    // it swaps WMATIC (only!) to other tokens
     const swapper = await swapperFactory.deploy(
       ["BCT", "NCT", "USDC", "WETH", "WMATIC"],
       [
@@ -83,9 +91,10 @@ describe("OffsetHelper", function () {
       ]
     );
 
+    // in ethers, each simulated signer has 1000 native token to start
+    // i.e. ETH in ETH networks, MATIC in Polygon networks
+    // each signer sends all but one MATIC to addr2 signer
     await Promise.all(
-      // Sending all but one MATIC to addr2
-      // (the signer of OffsetHelper) from each generated signer
       addrs.map(async (addr) => {
         await addr.sendTransaction({
           to: addr2.address,
@@ -94,12 +103,15 @@ describe("OffsetHelper", function () {
       })
     );
 
-    // ** Depositing 1000 MATIC to addr2?
+    // swapping 1000 MATIC to WMATIC:
+    // 1. depositing 1000 MATIC from `msg.sender` to the WMATIC contract
+    // 2. it gets automatically wrapped (MATIC -> WMATIC)
+    // 3. sending 1000 WMATIC back to `addr2` (identical to `msg.sender`)
     await IWETH__factory.connect(addresses.WMATIC, addr2).deposit({
       value: parseEther("1000"),
     });
 
-    // ** Swapping x MATIC to 20 WETH (from where to where?)
+    // swapping x WMATIC to 20 WETH in `addr2`
     await swapper.swap(addresses.WETH, parseEther("20.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.WETH,
@@ -107,7 +119,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
-    // ** Swapping x MATIC to 1000 USDC (from where to where?)
+    // swapping x WMATIC to 1000 USDC in `addr2`
     await swapper.swap(addresses.USDC, parseUSDC("1000"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.USDC,
@@ -115,7 +127,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
-    // ** Swapping x MATIC to 50 BCT (from where to where?)
+    // swapping x WMATIC to 50 BCT in `addr2`
     await swapper.swap(addresses.BCT, parseEther("50.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.BCT,
@@ -123,7 +135,7 @@ describe("OffsetHelper", function () {
       ),
     });
 
-    // ** Swapping x MATIC to 50 NCT (from where to where?)
+    // swapping x WMATIC to 50 NCT in `addr2`
     await swapper.swap(addresses.NCT, parseEther("50.0"), {
       value: await swapper.calculateNeededETHAmount(
         addresses.NCT,
