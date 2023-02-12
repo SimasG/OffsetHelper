@@ -297,6 +297,7 @@ contract OffsetHelper is OffsetHelperStorage {
         // deposit pool token from user to this contract
         // deposit(_poolToken, _amountToOffset);
 
+        // directly adding the logic of `deposit()` in `autoOffsetPoolToken()`
         IERC20(_poolToken).safeTransferFrom(
             msg.sender,
             address(this),
@@ -826,5 +827,15 @@ contract OffsetHelper is OffsetHelperStorage {
         address _address
     ) public virtual onlyOwner {
         contractRegistryAddress = _address;
+    }
+
+    // ----------------------------------------
+    //  Backward compatibility
+    // ----------------------------------------
+    function balances(
+        address token,
+        address account
+    ) public view returns (uint256) {
+        return IERC20(token).balanceOf(account);
     }
 }
