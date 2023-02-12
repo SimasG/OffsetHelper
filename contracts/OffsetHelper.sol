@@ -188,7 +188,11 @@ contract OffsetHelper is OffsetHelperStorage {
         address _poolToken
     ) public returns (address[] memory tco2s, uint256[] memory amounts) {
         // swap input token for BCT / NCT
-        uint256 amountToOffset = swapExactInToken(_fromToken, _amountToSwap, _poolToken);
+        uint256 amountToOffset = swapExactInToken(
+            _fromToken,
+            _amountToSwap,
+            _poolToken
+        );
 
         // redeem BCT / NCT for TCO2s
         (tco2s, amounts) = autoRedeem(_poolToken, amountToOffset);
@@ -218,7 +222,10 @@ contract OffsetHelper is OffsetHelperStorage {
      * @return tco2s An array of the TCO2 addresses that were redeemed
      * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
-    function autoOffsetExactOutETH(address _poolToken, uint256 _amountToOffset)
+    function autoOffsetExactOutETH(
+        address _poolToken,
+        uint256 _amountToOffset
+    )
         public
         payable
         returns (address[] memory tco2s, uint256[] memory amounts)
@@ -249,7 +256,9 @@ contract OffsetHelper is OffsetHelperStorage {
      * @return tco2s An array of the TCO2 addresses that were redeemed
      * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
-    function autoOffsetExactInETH(address _poolToken)
+    function autoOffsetExactInETH(
+        address _poolToken
+    )
         public
         payable
         returns (address[] memory tco2s, uint256[] memory amounts)
@@ -286,7 +295,14 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 _amountToOffset
     ) public returns (address[] memory tco2s, uint256[] memory amounts) {
         // deposit pool token from user to this contract
-        deposit(_poolToken, _amountToOffset);
+        // deposit(_poolToken, _amountToOffset);
+
+        IERC20(_poolToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amountToOffset
+        );
+        // balances[msg.sender][_poolToken] += _amountToOffset;
 
         // redeem BCT / NCT for TCO2s
         (tco2s, amounts) = autoRedeem(_poolToken, _amountToOffset);
@@ -351,9 +367,18 @@ contract OffsetHelper is OffsetHelperStorage {
         address _fromToken,
         address _toToken,
         uint256 _toAmount
-    ) public view onlySwappable(_fromToken) onlyRedeemable(_toToken) returns (uint256) {
-        (, uint256[] memory amounts) =
-            calculateExactOutSwap(_fromToken, _toToken, _toAmount);
+    )
+        public
+        view
+        onlySwappable(_fromToken)
+        onlyRedeemable(_toToken)
+        returns (uint256)
+    {
+        (, uint256[] memory amounts) = calculateExactOutSwap(
+            _fromToken,
+            _toToken,
+            _toAmount
+        );
         return amounts[0];
     }
 
@@ -371,9 +396,18 @@ contract OffsetHelper is OffsetHelperStorage {
         address _fromToken,
         uint256 _fromAmount,
         address _toToken
-    ) public view onlySwappable(_fromToken) onlyRedeemable(_toToken) returns (uint256) {
-        (, uint256[] memory amounts) =
-            calculateExactInSwap(_fromToken, _fromAmount, _toToken);
+    )
+        public
+        view
+        onlySwappable(_fromToken)
+        onlyRedeemable(_toToken)
+        returns (uint256)
+    {
+        (, uint256[] memory amounts) = calculateExactInSwap(
+            _fromToken,
+            _fromAmount,
+            _toToken
+        );
         return amounts[amounts.length - 1];
     }
 
@@ -390,8 +424,10 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 _toAmount
     ) public onlySwappable(_fromToken) onlyRedeemable(_toToken) {
         // calculate path & amounts
-        (address[] memory path, uint256[] memory expAmounts) =
-            calculateExactOutSwap(_fromToken, _toToken, _toAmount);
+        (
+            address[] memory path,
+            uint256[] memory expAmounts
+        ) = calculateExactOutSwap(_fromToken, _toToken, _toAmount);
         uint256 amountIn = expAmounts[0];
 
         // transfer tokens
@@ -419,7 +455,7 @@ contract OffsetHelper is OffsetHelperStorage {
         }
 
         // update balances
-        balances[msg.sender][_toToken] += _toAmount;
+        // balances[msg.sender][_toToken] += _toAmount;
     }
 
     /**
@@ -436,7 +472,12 @@ contract OffsetHelper is OffsetHelperStorage {
         address _fromToken,
         uint256 _fromAmount,
         address _toToken
-    ) public onlySwappable(_fromToken) onlyRedeemable(_toToken) returns (uint256) {
+    )
+        public
+        onlySwappable(_fromToken)
+        onlyRedeemable(_toToken)
+        returns (uint256)
+    {
         // calculate path & amounts
         address[] memory path = generatePath(_fromToken, _toToken);
         uint256 len = path.length;
@@ -462,7 +503,7 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 amountOut = amounts[len - 1];
 
         // update balances
-        balances[msg.sender][_toToken] += amountOut;
+        // balances[msg.sender][_toToken] += amountOut;
 
         return amountOut;
     }
@@ -483,15 +524,16 @@ contract OffsetHelper is OffsetHelperStorage {
      * @return amounts The amount of MATIC required in order to swap for
      * the specified amount of the pool token
      */
-    function calculateNeededETHAmount(address _toToken, uint256 _toAmount)
-        public
-        view
-        onlyRedeemable(_toToken)
-        returns (uint256)
-    {
+    function calculateNeededETHAmount(
+        address _toToken,
+        uint256 _toAmount
+    ) public view onlyRedeemable(_toToken) returns (uint256) {
         address fromToken = eligibleTokenAddresses["WMATIC"];
-        (, uint256[] memory amounts) =
-            calculateExactOutSwap(fromToken, _toToken, _toAmount);
+        (, uint256[] memory amounts) = calculateExactOutSwap(
+            fromToken,
+            _toToken,
+            _toAmount
+        );
         return amounts[0];
     }
 
@@ -509,8 +551,11 @@ contract OffsetHelper is OffsetHelperStorage {
         address _toToken
     ) public view onlyRedeemable(_toToken) returns (uint256) {
         address fromToken = eligibleTokenAddresses["WMATIC"];
-        (, uint256[] memory amounts) =
-            calculateExactInSwap(fromToken, _fromMaticAmount, _toToken);
+        (, uint256[] memory amounts) = calculateExactInSwap(
+            fromToken,
+            _fromMaticAmount,
+            _toToken
+        );
         return amounts[amounts.length - 1];
     }
 
@@ -520,7 +565,10 @@ contract OffsetHelper is OffsetHelperStorage {
      * @param _toToken Token to swap for (will be held within contract)
      * @param _toAmount Amount of NCT / BCT wanted
      */
-    function swapExactOutETH(address _toToken, uint256 _toAmount) public payable onlyRedeemable(_toToken) {
+    function swapExactOutETH(
+        address _toToken,
+        uint256 _toAmount
+    ) public payable onlyRedeemable(_toToken) {
         // calculate path & amounts
         address fromToken = eligibleTokenAddresses["WMATIC"];
         address[] memory path = generatePath(fromToken, _toToken);
@@ -541,7 +589,7 @@ contract OffsetHelper is OffsetHelperStorage {
         }
 
         // update balances
-        balances[msg.sender][_toToken] += _toAmount;
+        // balances[msg.sender][_toToken] += _toAmount;
     }
 
     /**
@@ -551,7 +599,9 @@ contract OffsetHelper is OffsetHelperStorage {
      * @return Resulting amount of Toucan pool token that got acquired for the
      * swapped MATIC.
      */
-    function swapExactInETH(address _toToken) public payable onlyRedeemable(_toToken) returns (uint256) {
+    function swapExactInETH(
+        address _toToken
+    ) public payable onlyRedeemable(_toToken) returns (uint256) {
         // calculate path & amounts
         uint256 fromAmount = msg.value;
         address fromToken = eligibleTokenAddresses["WMATIC"];
@@ -565,7 +615,7 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 amountOut = amounts[len - 1];
 
         // update balances
-        balances[msg.sender][_toToken] += amountOut;
+        // balances[msg.sender][_toToken] += amountOut;
 
         return amountOut;
     }
@@ -573,24 +623,32 @@ contract OffsetHelper is OffsetHelperStorage {
     /**
      * @notice Allow users to withdraw tokens they have deposited.
      */
-    function withdraw(address _erc20Addr, uint256 _amount) public {
-        require(
-            balances[msg.sender][_erc20Addr] >= _amount,
-            "Insufficient balance"
-        );
+    // function withdraw(address _erc20Addr, uint256 _amount) public {
+    //     require(
+    //         balances[msg.sender][_erc20Addr] >= _amount,
+    //         "Insufficient balance"
+    //     );
 
-        IERC20(_erc20Addr).safeTransfer(msg.sender, _amount);
-        balances[msg.sender][_erc20Addr] -= _amount;
-    }
+    //     // require(
+    //     //     IERC20(_erc20Addr).balanceOf(msg.sender) >= _amount,
+    //     //     "Insufficient balance"
+    //     // );
+
+    //     IERC20(_erc20Addr).safeTransfer(msg.sender, _amount);
+    //     balances[msg.sender][_erc20Addr] -= _amount;
+    // }
 
     /**
      * @notice Allow users to deposit BCT / NCT.
      * @dev Needs to be approved
      */
-    function deposit(address _erc20Addr, uint256 _amount) public onlyRedeemable(_erc20Addr) {
-        IERC20(_erc20Addr).safeTransferFrom(msg.sender, address(this), _amount);
-        balances[msg.sender][_erc20Addr] += _amount;
-    }
+    // function deposit(
+    //     address _erc20Addr,
+    //     uint256 _amount
+    // ) public onlyRedeemable(_erc20Addr) {
+    //     IERC20(_erc20Addr).safeTransferFrom(msg.sender, address(this), _amount);
+    //     balances[msg.sender][_erc20Addr] += _amount;
+    // }
 
     /**
      * @notice Redeems the specified amount of NCT / BCT for TCO2.
@@ -600,15 +658,28 @@ contract OffsetHelper is OffsetHelperStorage {
      * @return tco2s An array of the TCO2 addresses that were redeemed
      * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
-    function autoRedeem(address _fromToken, uint256 _amount)
+    function autoRedeem(
+        address _fromToken,
+        uint256 _amount
+    )
         public
         onlyRedeemable(_fromToken)
         returns (address[] memory tco2s, uint256[] memory amounts)
     {
-        require(
-            balances[msg.sender][_fromToken] >= _amount,
-            "Insufficient NCT/BCT balance"
-        );
+        // require(
+        //     balances[msg.sender][_fromToken] >= _amount,
+        //     "Insufficient NCT/BCT balance"
+        // );
+        // require(
+        //     IERC20(_fromToken).balanceOf(msg.sender) >= _amount,
+        //     "Insufficient NCT/BCT balance"
+        // );
+
+        // check for NCT/BCT balance inside OffsetHelper?
+        // require(
+        //     IERC20(_fromToken).balanceOf(address(this)) >= _amount,
+        //     "Insufficient NCT/BCT balance"
+        // );
 
         // instantiate pool token (NCT or BCT)
         IToucanPoolToken PoolTokenImplementation = IToucanPoolToken(_fromToken);
@@ -617,11 +688,11 @@ contract OffsetHelper is OffsetHelperStorage {
         (tco2s, amounts) = PoolTokenImplementation.redeemAuto2(_amount);
 
         // update balances
-        balances[msg.sender][_fromToken] -= _amount;
-        uint256 tco2sLen = tco2s.length;
-        for (uint256 index = 0; index < tco2sLen; index++) {
-            balances[msg.sender][tco2s[index]] += amounts[index];
-        }
+        // balances[msg.sender][_fromToken] -= _amount;
+        // uint256 tco2sLen = tco2s.length;
+        // for (uint256 index = 0; index < tco2sLen; index++) {
+        //     balances[msg.sender][tco2s[index]] += amounts[index];
+        // }
 
         emit Redeemed(msg.sender, _fromToken, tco2s, amounts);
     }
@@ -632,9 +703,10 @@ contract OffsetHelper is OffsetHelperStorage {
      * @param _amounts The amounts to retire from each of the corresponding
      * TCO2 addresses
      */
-    function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
-        public
-    {
+    function autoRetire(
+        address[] memory _tco2s,
+        uint256[] memory _amounts
+    ) public {
         uint256 tco2sLen = _tco2s.length;
         require(tco2sLen != 0, "Array empty");
 
@@ -648,12 +720,17 @@ contract OffsetHelper is OffsetHelperStorage {
                 }
                 continue;
             }
-            require(
-                balances[msg.sender][_tco2s[i]] >= _amounts[i],
-                "Insufficient TCO2 balance"
-            );
+            // require(
+            //     balances[msg.sender][_tco2s[i]] >= _amounts[i],
+            //     "Insufficient TCO2 balance"
+            // );
 
-            balances[msg.sender][_tco2s[i]] -= _amounts[i];
+            // balances[msg.sender][_tco2s[i]] -= _amounts[i];
+
+            // require(
+            //     IERC20(_tco2s[i]).balanceOf(msg.sender) >= _amounts[i],
+            //     "Insufficient TCO2 balance"
+            // );
 
             IToucanCarbonOffsets(_tco2s[i]).retire(_amounts[i]);
 
@@ -666,10 +743,8 @@ contract OffsetHelper is OffsetHelperStorage {
     function calculateExactOutSwap(
         address _fromToken,
         address _toToken,
-        uint256 _toAmount)
-        internal view
-        returns (address[] memory path, uint256[] memory amounts)
-    {
+        uint256 _toAmount
+    ) internal view returns (address[] memory path, uint256[] memory amounts) {
         path = generatePath(_fromToken, _toToken);
         uint256 len = path.length;
 
@@ -683,10 +758,8 @@ contract OffsetHelper is OffsetHelperStorage {
     function calculateExactInSwap(
         address _fromToken,
         uint256 _fromAmount,
-        address _toToken)
-        internal view
-        returns (address[] memory path, uint256[] memory amounts)
-    {
+        address _toToken
+    ) internal view returns (address[] memory path, uint256[] memory amounts) {
         path = generatePath(_fromToken, _toToken);
         uint256 len = path.length;
 
@@ -697,11 +770,10 @@ contract OffsetHelper is OffsetHelperStorage {
         require(_fromAmount == amounts[0], "Input amount mismatch");
     }
 
-    function generatePath(address _fromToken, address _toToken)
-        internal
-        view
-        returns (address[] memory)
-    {
+    function generatePath(
+        address _fromToken,
+        address _toToken
+    ) internal view returns (address[] memory) {
         if (_fromToken == eligibleTokenAddresses["USDC"]) {
             address[] memory path = new address[](2);
             path[0] = _fromToken;
@@ -740,11 +812,9 @@ contract OffsetHelper is OffsetHelperStorage {
      * @notice Delete eligible tokens stored in the contract.
      * @param _tokenSymbol The symbol of the token to remove
      */
-    function deleteEligibleTokenAddress(string memory _tokenSymbol)
-        public
-        virtual
-        onlyOwner
-    {
+    function deleteEligibleTokenAddress(
+        string memory _tokenSymbol
+    ) public virtual onlyOwner {
         delete eligibleTokenAddresses[_tokenSymbol];
     }
 
@@ -752,11 +822,9 @@ contract OffsetHelper is OffsetHelperStorage {
      * @notice Change the TCO2 contracts registry.
      * @param _address The address of the Toucan contract registry to use
      */
-    function setToucanContractRegistry(address _address)
-        public
-        virtual
-        onlyOwner
-    {
+    function setToucanContractRegistry(
+        address _address
+    ) public virtual onlyOwner {
         contractRegistryAddress = _address;
     }
 }

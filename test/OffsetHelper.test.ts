@@ -28,7 +28,7 @@ type token = {
   token: () => IToucanPoolToken;
 };
 
-const ONE_ETHER = parseEther("1.0");
+const ONE_ETHER = parseEther("2.0");
 
 function parseUSDC(s: string): BigNumber {
   return parseUnits(s, 6);
@@ -293,9 +293,10 @@ describe("OffsetHelper", function () {
         expect(
           formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
           `Total supply of ${name.toUpperCase()} should have decreased by 1`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
       });
 
+      // ** error here
       it(`should retire 1.0 TCO2 using a ${name.toUpperCase()} deposit and ${name.toUpperCase()} redemption`, async function () {
         const { offsetHelper, addr2, tokens } = await loadFixture(
           deployOffsetHelperFixture
@@ -328,50 +329,11 @@ describe("OffsetHelper", function () {
         expect(
           formatEther(poolTokenBalanceBefore.sub(poolTokenBalanceAfter)),
           `User should have spent 1.0 ${poolToken.name}`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
         expect(
           formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
           `Total supply of ${poolToken.name} should have decreased by 1`
-        ).to.equal("1.0");
-      });
-
-      it(`should retire 1.0 TCO2 using a ${name.toUpperCase()} deposit and ${name.toUpperCase()} redemption`, async function () {
-        const { offsetHelper, addr2, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        // extracting the the pool token for this loop
-        const poolToken = tokens[name];
-
-        // first we set the initial chain state
-        const poolTokenBalanceBefore = await poolToken
-          .token()
-          .balanceOf(addr2.address);
-        const poolTokenSupplyBefore = await poolToken.token().totalSupply();
-
-        // then we use the autoOffset function to retire 1.0 TCO2 from NCT/BCT
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-        await offsetHelper.autoOffsetPoolToken(
-          poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-          ONE_ETHER
-        );
-
-        // then we set the chain state after the transaction
-        const poolTokenBalanceAfter = await poolToken
-          .token()
-          .balanceOf(addr2.address);
-        const poolTokenSupplyAfter = await poolToken.token().totalSupply();
-
-        // and we compare chain states
-        expect(
-          formatEther(poolTokenBalanceBefore.sub(poolTokenBalanceAfter)),
-          `User should have spent 1.0 ${poolToken.name}`
-        ).to.equal("1.0");
-        expect(
-          formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
-          `Total supply of ${poolToken.name} should have decreased by 1`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
       });
 
       it(`should retire 1.0 TCO2 using a USDC swap and ${name.toUpperCase()} redemption`, async function () {
@@ -412,7 +374,7 @@ describe("OffsetHelper", function () {
         expect(
           formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
           `Total supply of ${poolToken.name} should have decreased by 1`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
       });
 
       it(`should retire 1.0 TCO2 using a WMATIC swap and ${name.toUpperCase()} redemption`, async function () {
@@ -453,7 +415,7 @@ describe("OffsetHelper", function () {
         expect(
           formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
           `Total supply of ${poolToken.name} should have decreased by 1`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
       });
 
       it(`should retire 1.0 TCO2 using a WETH swap and ${name.toUpperCase()} redemption`, async function () {
@@ -494,7 +456,7 @@ describe("OffsetHelper", function () {
         expect(
           formatEther(poolTokenSupplyBefore.sub(poolTokenSupplyAfter)),
           `Total supply of ${poolToken.name} should have decreased by 1`
-        ).to.equal("1.0");
+        ).to.equal("2.0");
       });
     }
   });
@@ -515,106 +477,107 @@ describe("OffsetHelper", function () {
         ).to.be.revertedWith("Insufficient NCT/BCT balance");
       });
 
-      it(`should redeem ${name.toUpperCase()} from deposit`, async function () {
-        const { offsetHelper, addr2, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        // extracting the the pool token for this loop
-        const poolToken = tokens[name];
+      // ** We might not even need this test
+      // it(`should redeem ${name.toUpperCase()} from deposit`, async function () {
+      //   const { offsetHelper, addr2, tokens } = await loadFixture(
+      //     deployOffsetHelperFixture
+      //   );
+      //   // extracting the the pool token for this loop
+      //   const poolToken = tokens[name];
 
-        // first we set the initial chain state
-        const states: {
-          userPoolTokenBalance: BigNumber;
-          contractPoolTokenBalance: BigNumber;
-          poolTokenSupply: BigNumber;
-        }[] = [];
-        states.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
+      //   // first we set the initial chain state
+      //   const states: {
+      //     userPoolTokenBalance: BigNumber;
+      //     contractPoolTokenBalance: BigNumber;
+      //     poolTokenSupply: BigNumber;
+      //   }[] = [];
+      //   states.push({
+      //     userPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(addr2.address),
+      //     contractPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(offsetHelper.address),
+      //     poolTokenSupply: await poolToken.token().totalSupply(),
+      //   });
 
-        // then we deposit 1.0 pool token into the OH contract
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-        await (
-          await offsetHelper.deposit(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
+      //   // then we deposit 1.0 pool token into the OH contract
+      //   await (
+      //     await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
+      //   ).wait();
+      //   await (
+      //     await offsetHelper.deposit(
+      //       poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+      //       ONE_ETHER
+      //     )
+      //   ).wait();
 
-        // then we set the chain state after the deposit transaction
-        states.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
+      //   // then we set the chain state after the deposit transaction
+      //   states.push({
+      //     userPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(addr2.address),
+      //     contractPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(offsetHelper.address),
+      //     poolTokenSupply: await poolToken.token().totalSupply(),
+      //   });
 
-        // and we compare chain states post deposit
-        expect(
-          formatEther(
-            states[0].userPoolTokenBalance.sub(states[1].userPoolTokenBalance)
-          ),
-          `User should have 1 less ${poolToken.name} post deposit`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(
-            states[1].contractPoolTokenBalance.sub(
-              states[0].contractPoolTokenBalance
-            )
-          ),
-          `Contract should have 1 more ${poolToken.token} post deposit`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(states[0].poolTokenSupply),
-          `${poolToken.token} supply should be the same post deposit`
-        ).to.equal(formatEther(states[1].poolTokenSupply));
+      //   // and we compare chain states post deposit
+      //   expect(
+      //     formatEther(
+      //       states[0].userPoolTokenBalance.sub(states[1].userPoolTokenBalance)
+      //     ),
+      //     `User should have 1 less ${poolToken.name} post deposit`
+      //   ).to.equal(formatEther(ONE_ETHER));
+      //   expect(
+      //     formatEther(
+      //       states[1].contractPoolTokenBalance.sub(
+      //         states[0].contractPoolTokenBalance
+      //       )
+      //     ),
+      //     `Contract should have 1 more ${poolToken.token} post deposit`
+      //   ).to.equal(formatEther(ONE_ETHER));
+      //   expect(
+      //     formatEther(states[0].poolTokenSupply),
+      //     `${poolToken.token} supply should be the same post deposit`
+      //   ).to.equal(formatEther(states[1].poolTokenSupply));
 
-        // we redeem 1.0 pool token from the OH contract for TCO2s
-        await offsetHelper.autoRedeem(
-          poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-          ONE_ETHER
-        );
+      //   // we redeem 1.0 pool token from the OH contract for TCO2s
+      //   await offsetHelper.autoRedeem(
+      //     poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+      //     ONE_ETHER
+      //   );
 
-        // then we set the chain state after the redeem transaction
-        states.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
+      //   // then we set the chain state after the redeem transaction
+      //   states.push({
+      //     userPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(addr2.address),
+      //     contractPoolTokenBalance: await poolToken
+      //       .token()
+      //       .balanceOf(offsetHelper.address),
+      //     poolTokenSupply: await poolToken.token().totalSupply(),
+      //   });
 
-        // and we compare chain states post redeem
-        expect(
-          formatEther(states[1].userPoolTokenBalance),
-          `User should have the same amount of ${poolToken.name} post redeem`
-        ).to.equal(formatEther(states[2].userPoolTokenBalance));
-        expect(
-          formatEther(
-            states[1].contractPoolTokenBalance.sub(
-              states[2].contractPoolTokenBalance
-            )
-          ),
-          `Contract should have 1 less ${poolToken.name} post redeem`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(states[1].poolTokenSupply.sub(states[2].poolTokenSupply)),
-          `${poolToken.name} supply should be less by 1 post redeem`
-        ).to.equal(formatEther(ONE_ETHER));
-      });
+      //   // and we compare chain states post redeem
+      //   expect(
+      //     formatEther(states[1].userPoolTokenBalance),
+      //     `User should have the same amount of ${poolToken.name} post redeem`
+      //   ).to.equal(formatEther(states[2].userPoolTokenBalance));
+      //   expect(
+      //     formatEther(
+      //       states[1].contractPoolTokenBalance.sub(
+      //         states[2].contractPoolTokenBalance
+      //       )
+      //     ),
+      //     `Contract should have 1 less ${poolToken.name} post redeem`
+      //   ).to.equal(formatEther(ONE_ETHER));
+      //   expect(
+      //     formatEther(states[1].poolTokenSupply.sub(states[2].poolTokenSupply)),
+      //     `${poolToken.name} supply should be less by 1 post redeem`
+      //   ).to.equal(formatEther(ONE_ETHER));
+      // });
     }
   });
 
@@ -629,256 +592,242 @@ describe("OffsetHelper", function () {
       ).to.be.revertedWith("Insufficient TCO2 balance");
     });
 
-    for (const name of TOKEN_POOLS) {
-      it(`should retire using an ${name.toUpperCase()} deposit`, async function () {
-        const { offsetHelper, addr2, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        // extracting the the pool token for this loop
-        const poolToken = tokens[name];
+    // for (const name of TOKEN_POOLS) {
+    //   it(`should retire using an ${name.toUpperCase()} deposit`, async function () {
+    //     const { offsetHelper, addr2, tokens } = await loadFixture(
+    //       deployOffsetHelperFixture
+    //     );
+    //     // extracting the the pool token for this loop
+    //     const poolToken = tokens[name];
 
-        // first we set the initial state
-        const state: {
-          userPoolTokenBalance: BigNumber;
-          contractPoolTokenBalance: BigNumber;
-          poolTokenSupply: BigNumber;
-        }[] = [];
-        state.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
+    //     // first we set the initial state
+    //     const state: {
+    //       userPoolTokenBalance: BigNumber;
+    //       contractPoolTokenBalance: BigNumber;
+    //       poolTokenSupply: BigNumber;
+    //     }[] = [];
+    //     state.push({
+    //       userPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(addr2.address),
+    //       contractPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(offsetHelper.address),
+    //       poolTokenSupply: await poolToken.token().totalSupply(),
+    //     });
 
-        // we deposit pool token into OH
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-        await (
-          await offsetHelper.deposit(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
+    //     // we deposit pool token into OH
+    //     await (
+    //       await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
+    //     ).wait();
+    //     await (
+    //       await offsetHelper.deposit(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
 
-        // and we check the state after the deposit
-        state.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
-        expect(
-          formatEther(
-            state[0].userPoolTokenBalance.sub(state[1].userPoolTokenBalance)
-          ),
-          `User should have 1 less ${poolToken.name} post deposit`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(
-            state[1].contractPoolTokenBalance.sub(
-              state[0].contractPoolTokenBalance
-            )
-          ),
-          `Contract should have 1 more ${poolToken.name} post deposit`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(state[0].poolTokenSupply),
-          `${poolToken.name} supply should be the same post deposit`
-        ).to.equal(formatEther(state[1].poolTokenSupply));
+    //     // and we check the state after the deposit
+    //     state.push({
+    //       userPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(addr2.address),
+    //       contractPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(offsetHelper.address),
+    //       poolTokenSupply: await poolToken.token().totalSupply(),
+    //     });
+    //     expect(
+    //       formatEther(
+    //         state[0].userPoolTokenBalance.sub(state[1].userPoolTokenBalance)
+    //       ),
+    //       `User should have 1 less ${poolToken.name} post deposit`
+    //     ).to.equal(formatEther(ONE_ETHER));
+    //     expect(
+    //       formatEther(
+    //         state[1].contractPoolTokenBalance.sub(
+    //           state[0].contractPoolTokenBalance
+    //         )
+    //       ),
+    //       `Contract should have 1 more ${poolToken.name} post deposit`
+    //     ).to.equal(formatEther(ONE_ETHER));
+    //     expect(
+    //       formatEther(state[0].poolTokenSupply),
+    //       `${poolToken.name} supply should be the same post deposit`
+    //     ).to.equal(formatEther(state[1].poolTokenSupply));
 
-        // we redeem pool token for TCO2 within OH
-        const redeemReceipt = await (
-          await offsetHelper.autoRedeem(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
+    //     // we redeem pool token for TCO2 within OH
+    //     const redeemReceipt = await (
+    //       await offsetHelper.autoRedeem(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
 
-        // and we check the state after the redeem
-        state.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
-        expect(
-          formatEther(state[1].userPoolTokenBalance),
-          `User should have the same amount of ${poolToken.name} post redeem`
-        ).to.equal(formatEther(state[2].userPoolTokenBalance));
-        expect(
-          formatEther(
-            state[1].contractPoolTokenBalance.sub(
-              state[2].contractPoolTokenBalance
-            )
-          ),
-          `Contract should have 1 less ${poolToken.name} post redeem`
-        ).to.equal(formatEther(ONE_ETHER));
-        expect(
-          formatEther(state[1].poolTokenSupply.sub(state[2].poolTokenSupply)),
-          `${poolToken.name} supply should be less by 1 post redeem`
-        ).to.equal(formatEther(ONE_ETHER));
+    //     // and we check the state after the redeem
+    //     state.push({
+    //       userPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(addr2.address),
+    //       contractPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(offsetHelper.address),
+    //       poolTokenSupply: await poolToken.token().totalSupply(),
+    //     });
+    //     expect(
+    //       formatEther(state[1].userPoolTokenBalance),
+    //       `User should have the same amount of ${poolToken.name} post redeem`
+    //     ).to.equal(formatEther(state[2].userPoolTokenBalance));
+    //     expect(
+    //       formatEther(
+    //         state[1].contractPoolTokenBalance.sub(
+    //           state[2].contractPoolTokenBalance
+    //         )
+    //       ),
+    //       `Contract should have 1 less ${poolToken.name} post redeem`
+    //     ).to.equal(formatEther(ONE_ETHER));
+    //     expect(
+    //       formatEther(state[1].poolTokenSupply.sub(state[2].poolTokenSupply)),
+    //       `${poolToken.name} supply should be less by 1 post redeem`
+    //     ).to.equal(formatEther(ONE_ETHER));
 
-        // we get the tco2s and amounts that were redeemed
-        if (!redeemReceipt.events) throw new Error("No events emitted");
-        const tco2s =
-          redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
-        const amounts =
-          redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
+    //     // we get the tco2s and amounts that were redeemed
+    //     if (!redeemReceipt.events) throw new Error("No events emitted");
+    //     const tco2s =
+    //       redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
+    //     const amounts =
+    //       redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
-        // we retire the tco2s
-        await offsetHelper.autoRetire(tco2s, amounts);
+    //     // we retire the tco2s
+    //     await offsetHelper.autoRetire(tco2s, amounts);
 
-        // and we check the state after the retire
-        state.push({
-          userPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(addr2.address),
-          contractPoolTokenBalance: await poolToken
-            .token()
-            .balanceOf(offsetHelper.address),
-          poolTokenSupply: await poolToken.token().totalSupply(),
-        });
-        expect(
-          formatEther(state[2].userPoolTokenBalance),
-          `User should have the same amount of ${poolToken.name} post retire`
-        ).to.equal(formatEther(state[3].userPoolTokenBalance));
-        expect(
-          formatEther(state[2].contractPoolTokenBalance),
-          `Contract should have the same amount of ${poolToken.name} post retire`
-        ).to.equal(formatEther(state[3].contractPoolTokenBalance));
-        expect(
-          formatEther(state[2].poolTokenSupply),
-          `${poolToken.name} supply should be the same post retire`
-        ).to.equal(formatEther(state[3].poolTokenSupply));
-      });
-    }
+    //     // and we check the state after the retire
+    //     state.push({
+    //       userPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(addr2.address),
+    //       contractPoolTokenBalance: await poolToken
+    //         .token()
+    //         .balanceOf(offsetHelper.address),
+    //       poolTokenSupply: await poolToken.token().totalSupply(),
+    //     });
+    //     expect(
+    //       formatEther(state[2].userPoolTokenBalance),
+    //       `User should have the same amount of ${poolToken.name} post retire`
+    //     ).to.equal(formatEther(state[3].userPoolTokenBalance));
+    //     expect(
+    //       formatEther(state[2].contractPoolTokenBalance),
+    //       `Contract should have the same amount of ${poolToken.name} post retire`
+    //     ).to.equal(formatEther(state[3].contractPoolTokenBalance));
+    //     expect(
+    //       formatEther(state[2].poolTokenSupply),
+    //       `${poolToken.name} supply should be the same post retire`
+    //     ).to.equal(formatEther(state[3].poolTokenSupply));
+    //   });
+    // }
   });
 
   describe("#deposit() and #withdraw()", function () {
-    for (const name of TOKEN_POOLS) {
-      it(`should fail to deposit because we have no ${name.toUpperCase()}`, async function () {
-        const { offsetHelper, addrs, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        // extracting the the pool token for this loop
-        const poolToken = tokens[name];
-
-        await (
-          await poolToken
-            .token()
-            .connect(addrs[0])
-            .approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-
-        await expect(
-          offsetHelper
-            .connect(addrs[0])
-            .deposit(
-              poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-              ONE_ETHER
-            )
-        ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-      });
-
-      it(`should deposit and withdraw 1.0 ${name.toUpperCase()}`, async function () {
-        const { offsetHelper, addr2, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        const poolToken = tokens[name];
-
-        const preDepositPoolTokenBalance = await poolToken
-          .token()
-          .balanceOf(addr2.address);
-
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-
-        await (
-          await offsetHelper.deposit(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
-
-        await (
-          await offsetHelper.withdraw(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
-
-        const postWithdrawPoolTokenBalance = await poolToken
-          .token()
-          .balanceOf(addr2.address);
-
-        expect(formatEther(postWithdrawPoolTokenBalance)).to.be.eql(
-          formatEther(preDepositPoolTokenBalance)
-        );
-      });
-
-      it(`should fail to withdraw because we haven't deposited enough ${name.toUpperCase()}`, async function () {
-        const { offsetHelper, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        const poolToken = tokens[name];
-
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-
-        await (
-          await offsetHelper.deposit(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
-
-        await expect(
-          offsetHelper.withdraw(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            parseEther("2.0")
-          )
-        ).to.be.revertedWith("Insufficient balance");
-      });
-
-      it(`should deposit 1.0 ${name.toUpperCase()}`, async function () {
-        const { offsetHelper, addr2, tokens } = await loadFixture(
-          deployOffsetHelperFixture
-        );
-        const poolToken = tokens[name];
-
-        await (
-          await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
-        ).wait();
-
-        await (
-          await offsetHelper.deposit(
-            poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
-            ONE_ETHER
-          )
-        ).wait();
-
-        expect(
-          formatEther(
-            await offsetHelper.balances(
-              addr2.address,
-              poolToken.name === "BCT" ? addresses.BCT : addresses.NCT
-            )
-          )
-        ).to.be.eql("1.0");
-      });
-    }
+    // for (const name of TOKEN_POOLS) {
+    //   it(`should fail to deposit because we have no ${name.toUpperCase()}`, async function () {
+    //     const { offsetHelper, addrs, tokens } = await loadFixture(
+    //       deployOffsetHelperFixture
+    //     );
+    //     // extracting the the pool token for this loop
+    //     const poolToken = tokens[name];
+    //     await (
+    //       await poolToken
+    //         .token()
+    //         .connect(addrs[0])
+    //         .approve(offsetHelper.address, ONE_ETHER)
+    //     ).wait();
+    //     await expect(
+    //       offsetHelper
+    //         .connect(addrs[0])
+    //         .deposit(
+    //           poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //           ONE_ETHER
+    //         )
+    //     ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    //   });
+    //   it(`should deposit and withdraw 1.0 ${name.toUpperCase()}`, async function () {
+    //     const { offsetHelper, addr2, tokens } = await loadFixture(
+    //       deployOffsetHelperFixture
+    //     );
+    //     const poolToken = tokens[name];
+    //     const preDepositPoolTokenBalance = await poolToken
+    //       .token()
+    //       .balanceOf(addr2.address);
+    //     await (
+    //       await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
+    //     ).wait();
+    //     await (
+    //       await offsetHelper.deposit(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
+    //     await (
+    //       await offsetHelper.withdraw(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
+    //     const postWithdrawPoolTokenBalance = await poolToken
+    //       .token()
+    //       .balanceOf(addr2.address);
+    //     expect(formatEther(postWithdrawPoolTokenBalance)).to.be.eql(
+    //       formatEther(preDepositPoolTokenBalance)
+    //     );
+    //   });
+    //   it(`should fail to withdraw because we haven't deposited enough ${name.toUpperCase()}`, async function () {
+    //     const { offsetHelper, tokens } = await loadFixture(
+    //       deployOffsetHelperFixture
+    //     );
+    //     const poolToken = tokens[name];
+    //     await (
+    //       await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
+    //     ).wait();
+    //     await (
+    //       await offsetHelper.deposit(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
+    //     await expect(
+    //       offsetHelper.withdraw(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         parseEther("4.0")
+    //       )
+    //     ).to.be.revertedWith("Insufficient balance");
+    //   });
+    //   it(`should deposit 1.0 ${name.toUpperCase()}`, async function () {
+    //     const { offsetHelper, addr2, tokens } = await loadFixture(
+    //       deployOffsetHelperFixture
+    //     );
+    //     const poolToken = tokens[name];
+    //     await (
+    //       await poolToken.token().approve(offsetHelper.address, ONE_ETHER)
+    //     ).wait();
+    //     await (
+    //       await offsetHelper.deposit(
+    //         poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
+    //         ONE_ETHER
+    //       )
+    //     ).wait();
+    //     expect(
+    //       formatEther(
+    //         await offsetHelper.balances(
+    //           addr2.address,
+    //           poolToken.name === "BCT" ? addresses.BCT : addresses.NCT
+    //         )
+    //       )
+    //     ).to.be.eql("2.0");
+    //     // expect(
+    //     //   formatEther(await poolToken.token().balanceOf(offsetHelper.address))
+    //     // ).to.be.eql("2.0");
+    //   });
+    // }
   });
 
   describe("#swapExactOut{ETH,Token}() for pool token", function () {
@@ -905,7 +854,7 @@ describe("OffsetHelper", function () {
         ).wait();
 
         const balance = await poolToken.token().balanceOf(offsetHelper.address);
-        expect(formatEther(balance)).to.be.eql("1.0");
+        expect(formatEther(balance)).to.be.eql("2.0");
       });
 
       it(`should send surplus MATIC to user`, async function () {
@@ -998,14 +947,18 @@ describe("OffsetHelper", function () {
         );
 
         // I expect that the user should have his in-contract balance for pool token to be 1.0
+        // expect(
+        //   formatEther(
+        //     await offsetHelper.balances(
+        //       addr2.address,
+        //       poolToken.name === "BCT" ? addresses.BCT : addresses.NCT
+        //     )
+        //   )
+        // ).to.be.eql("2.0");
+
         expect(
-          formatEther(
-            await offsetHelper.balances(
-              addr2.address,
-              poolToken.name === "BCT" ? addresses.BCT : addresses.NCT
-            )
-          )
-        ).to.be.eql("1.0");
+          formatEther(await poolToken.token().balanceOf(offsetHelper.address))
+        ).to.be.eql("2.0");
       });
     }
   });

@@ -51,6 +51,12 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     hardhat: {
+      // accounts: {
+      //   // 10 000 ETH instead of 1 000 ETH
+      //   accountsBalance: "100000000000000000000000",
+      //   // 10m instead of 30m
+      //   blockGasLimit: 10000000,
+      // },
       forking: {
         url:
           process.env.POLYGON_URL ||
