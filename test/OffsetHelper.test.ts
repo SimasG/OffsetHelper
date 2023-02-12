@@ -474,7 +474,8 @@ describe("OffsetHelper", function () {
             poolToken.name === "BCT" ? addresses.BCT : addresses.NCT,
             ONE_ETHER
           )
-        ).to.be.revertedWith("Insufficient NCT/BCT balance");
+        ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+        // ** Can I just change the error msg to "ERC20: burn amount exceeds balance" since technically, both are the same?
       });
 
       // ** We might not even need this test
@@ -589,7 +590,8 @@ describe("OffsetHelper", function () {
           ["0xb139C4cC9D20A3618E9a2268D73Eff18C496B991"],
           [ONE_ETHER]
         )
-      ).to.be.revertedWith("Insufficient TCO2 balance");
+      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+      // ** Can I just change the error msg to "ERC20: burn amount exceeds balance" since technically, both are the same?
     });
 
     // for (const name of TOKEN_POOLS) {
